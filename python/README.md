@@ -108,6 +108,16 @@ result_json = cactus_transcribe(
 ) -> str
 ```
 
+**Custom vocabulary** biases the decoder toward domain-specific words (supported for Whisper and Moonshine models). Pass `custom_vocabulary` and `vocabulary_boost` in `options_json`:
+
+```python
+options = json.dumps({
+    "custom_vocabulary": ["Omeprazole", "HIPAA", "Cactus"],
+    "vocabulary_boost": 3.0
+})
+result = json.loads(cactus_transcribe(model, "medical_notes.wav", None, options, None, None))
+```
+
 Streaming transcription:
 
 ```python
@@ -115,6 +125,8 @@ stream = cactus_stream_transcribe_start(handle: int, options_json: str | None) -
 partial = cactus_stream_transcribe_process(stream: int, pcm_data: bytes) -> str
 final   = cactus_stream_transcribe_stop(stream: int) -> str
 ```
+
+Streaming also accepts `custom_vocabulary` in the options passed to `cactus_stream_transcribe_start`. The bias is applied for the lifetime of the stream session.
 
 ### Embeddings
 

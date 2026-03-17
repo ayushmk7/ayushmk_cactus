@@ -337,6 +337,38 @@ int result = cactus_transcribe(whisper, NULL, NULL,
                                 pcm_data, pcm_size);
 ```
 
+**Transcription Options Format:**
+```json
+{
+    "max_tokens": 100,
+    "custom_vocabulary": ["Omeprazole", "HIPAA", "Cactus"],
+    "vocabulary_boost": 3.0
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `max_tokens` | int | 448 | Maximum tokens to generate |
+| `custom_vocabulary` | array | [] | List of words or phrases to bias the decoder toward. Useful for proper nouns, acronyms, medical terms, and domain-specific jargon. |
+| `vocabulary_boost` | float | 5.0 | Logit bias strength applied to tokens from `custom_vocabulary`. Clamped to 0.0–20.0. Higher values make the listed words more likely to appear. |
+
+**Note:** Custom vocabulary biasing is supported for Whisper and Moonshine models. Each vocabulary entry is tokenized into sub-tokens and the boost is applied per-token at each decoder step.
+
+**Example (with custom vocabulary):**
+```c
+cactus_model_t whisper = cactus_init("../../weights/whisper-small", NULL);
+
+const char* options = "{\"custom_vocabulary\": [\"Omeprazole\", \"HIPAA\", \"Cactus\"], \"vocabulary_boost\": 3.0}";
+
+char response[16384];
+int result = cactus_transcribe(whisper, "medical_notes.wav", NULL,
+                                response, sizeof(response), options, NULL, NULL,
+                                NULL, 0);
+if (result > 0) {
+    printf("Transcription: %s\n", response);
+}
+```
+
 ### `cactus_stream_transcribe_t`
 An opaque pointer type representing a streaming transcription session. Used for real-time audio transcription with incremental confirmation.
 
@@ -361,13 +393,17 @@ cactus_stream_transcribe_t cactus_stream_transcribe_start(
 {
     "confirmation_threshold": 0.99,
     "min_chunk_size": 32000,
-    "language": "en"
+    "language": "en",
+    "custom_vocabulary": ["Omeprazole", "HIPAA", "Cactus"],
+    "vocabulary_boost": 3.0
 }
 ```
 
 - `confirmation_threshold`: Threshold (0.0-1.0) for confirming transcription segments. Higher values require more stability. Default: 0.99
 - `min_chunk_size`: Minimum audio samples to perform transcription processing step. Default: 32000
 - `language`: ISO 639-1 language code (e.g., "en", "es", "fr", "de"). Default: "en". Ignored for non-Whisper models.
+- `custom_vocabulary`: List of words or phrases to bias the decoder toward. Useful for proper nouns, acronyms, and domain-specific terms. The bias is applied for the lifetime of the stream session.
+- `vocabulary_boost`: Logit bias strength for `custom_vocabulary` tokens. Default: 5.0. Clamped to 0.0–20.0.
 
 **Example:**
 ```c
@@ -378,6 +414,12 @@ if (!stream) {
     fprintf(stderr, "Failed to start stream: %s\n", cactus_get_last_error());
     return -1;
 }
+```
+
+**Example (with custom vocabulary):**
+```c
+const char* options = "{\"confirmation_threshold\": 0.99, \"custom_vocabulary\": [\"Omeprazole\", \"HIPAA\"], \"vocabulary_boost\": 5.0}";
+cactus_stream_transcribe_t stream = cactus_stream_transcribe_start(whisper, options);
 ```
 
 ### `cactus_stream_transcribe_process`

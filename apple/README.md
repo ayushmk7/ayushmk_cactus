@@ -120,6 +120,13 @@ let pcmData: Data = ...
 let result = try cactusTranscribe(model, nil, nil, nil, nil as ((String, UInt32) -> Void)?, pcmData)
 ```
 
+**Custom vocabulary** biases the decoder toward domain-specific words (supported for Whisper and Moonshine models). Pass `custom_vocabulary` and `vocabulary_boost` in the options JSON:
+
+```swift
+let options = #"{"custom_vocabulary": ["Omeprazole", "HIPAA", "Cactus"], "vocabulary_boost": 3.0}"#
+let result = try cactusTranscribe(model, "/path/to/audio.wav", nil, options, nil as ((String, UInt32) -> Void)?, nil as Data?)
+```
+
 ### Streaming Transcription
 
 ```swift
@@ -127,6 +134,8 @@ let stream = try cactusStreamTranscribeStart(model, nil as String?)
 let partial = try cactusStreamTranscribeProcess(stream, audioChunk)
 let final_  = try cactusStreamTranscribeStop(stream)
 ```
+
+Streaming also accepts `custom_vocabulary` in the options passed to `cactusStreamTranscribeStart`. The bias is applied for the lifetime of the stream session.
 
 ### Embeddings
 

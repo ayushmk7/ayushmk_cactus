@@ -88,6 +88,13 @@ final pcmData = Uint8List.fromList([...]);
 final result = cactusTranscribe(model, null, null, null, null, pcmData);
 ```
 
+**Custom vocabulary** biases the decoder toward domain-specific words (supported for Whisper and Moonshine models). Pass `custom_vocabulary` and `vocabulary_boost` in the options JSON:
+
+```dart
+final options = '{"custom_vocabulary": ["Omeprazole", "HIPAA", "Cactus"], "vocabulary_boost": 3.0}';
+final result = cactusTranscribe(model, '/path/to/audio.wav', '', options, null, null);
+```
+
 ### Streaming Transcription
 
 ```dart
@@ -95,6 +102,8 @@ final stream  = cactusStreamTranscribeStart(model, null);
 final partial = cactusStreamTranscribeProcess(stream, audioChunk);
 final final_  = cactusStreamTranscribeStop(stream);
 ```
+
+Streaming also accepts `custom_vocabulary` in the options passed to `cactusStreamTranscribeStart`. The bias is applied for the lifetime of the stream session.
 
 ### Embeddings
 
