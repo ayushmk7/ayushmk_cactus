@@ -9,7 +9,13 @@
 [![Reddit][reddit-shield]][reddit-url]
 [![Blog][blog-shield]][blog-url]
 
-A hybrid low-latency energy-efficient AI engine for mobile devices & wearables.
+A low-latency AI engine for mobile devices & wearables. Main features:
+
+- **Fast:** fastest inference on ARM CPU
+- **Low RAM:** zero-copy memory mapping ensures 10x lower RAM use than other engines
+- **Multimodal:** one SDK for speech, vision, and language models
+- **Cloud fallback:** automatically route requests to cloud models if needed
+- **Energy-efficient:** NPU-accelerated prefill
 
 ```
 ┌─────────────────┐
@@ -25,7 +31,7 @@ A hybrid low-latency energy-efficient AI engine for mobile devices & wearables.
 └─────────────────┘     Custom attention, KV-cache quant, chunked prefill
 ```
 
-## Quick Demo 
+## Quick Demo (Mac)
 
 - Step 1: `brew install cactus-compute/cactus/cactus`
 - Step 2: `cactus transcribe` or `cactus run` 
@@ -33,11 +39,12 @@ A hybrid low-latency energy-efficient AI engine for mobile devices & wearables.
 ## Cactus Engine
 
 ```cpp
-#include cactus.h
+#include "cactus.h"
 
 cactus_model_t model = cactus_init(
     "path/to/weight/folder",
     "path to txt or dir of txts for auto-rag",
+    false
 );
 
 const char* messages = R"([
@@ -85,7 +92,7 @@ Example response from Gemma3-270m
 ## Cactus Graph
 
 ```cpp
-#include cactus.h
+#include "cactus.h"
 
 CactusGraph graph;
 auto a = graph.input({2, 3}, Precision::FP16);
@@ -111,14 +118,16 @@ graph.hard_reset();
 
 | Reference | Language | Description |
 |-----------|----------|-------------|
-| [Engine API](cactus_engine.md) | C | Chat completion, streaming, tool calling, transcription, embeddings, RAG, vision, VAD, vector index, cloud handoff |
-| [Graph API](cactus_graph.md) | C++ | Tensor operations, matrix multiplication, attention, normalization, activation functions |
+| [Engine API](docs/cactus_engine.md) | C | Chat completion, streaming, tool calling, transcription, embeddings, RAG, vision, VAD, vector index, cloud handoff |
+| [Graph API](docs/cactus_graph.md) | C++ | Tensor operations, matrix multiplication, attention, normalization, activation functions |
 | [Python SDK](/python/) | Python | Mac, Linux |
 | [Swift SDK](/apple/) | Swift | iOS, macOS, tvOS, watchOS, Android |
 | [Kotlin SDK](/android/) | Kotlin | Android, iOS (via KMP) |
 | [Flutter SDK](/flutter/) | Dart | iOS, macOS, Android |
 | [Rust SDK](/rust/) | Rust | Mac, Linux |
 | [React Native](https://github.com/cactus-compute/cactus-react-native) | JavaScript | iOS, Android |
+
+> **Model weights:** Pre-converted weights for all supported models at [huggingface.co/Cactus-Compute](https://huggingface.co/Cactus-Compute).
 
 ## Benchmarks (CPU-only, no GPU)
 
@@ -153,14 +162,14 @@ graph.hard_reset();
 | openai/whisper-small | 244M | 856.79 | 332.63 | 108 | yes | 0.0428 | 0.0930 |
 | openai/whisper-medium | 769M | 2085.87 | 923.33 | 49 | yes | 0.1041 | 0.0930 |
 | nvidia/parakeet-ctc-0.6b | 600M | 201.77 | 201.44 | 5214285 | yes | 0.0101 | 0.0930 |
-| nvidia/parakeet-tdt-0.6b-v3 | 600M | 718.91 | 718.82 | 3583333 | no | 0.0359 | 0.0465 |
+| nvidia/parakeet-tdt-0.6b-v3 | 600M | 718.91 | 718.82 | 3583333 | yes | 0.0359 | 0.0465 |
 | nvidia/parakeet-ctc-1.1b | 1.1B | 279.03 | 278.92 | 4562500 | yes | 0.0139 | 0.1628 |
 | snakers4/silero-vad | - | - | - | - | - | - | - |
 
 ## Supported LLMs
 
 - Gemma weights are often **gated** on HuggingFace, needs tokens 
-- Run `hf auth login` and input your huggingface token
+- Run `huggingface-cli login` and input your huggingface token
 
 | Model | Features |                                                      
 |-------|----------|
@@ -272,7 +281,7 @@ graph.hard_reset();
 2. [UCLA's BruinAI](https://bruinai.org/)
 3. [Char (YC S25)](https://char.com/)
 4. [Yale's AI Society](https://www.yale-ai.org/team)
-5. [National Unoversity of Singapore's AI Society](https://www.nusaisociety.org/)
+5. [National University of Singapore's AI Society](https://www.nusaisociety.org/)
 6. [UC Irvine's AI@UCI](https://aiclub.ics.uci.edu/)
 7. [Imperial College's AI Society](https://www.imperialcollegeunion.org/csp/1391)
 8. [University of Pennsylvania's AI@Penn](https://ai-at-penn-main-105.vercel.app/)
