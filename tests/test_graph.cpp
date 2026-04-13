@@ -1448,6 +1448,88 @@ static bool run_layernorm_case(
     return fx.verify_output(out_id, expected, TestUtils::default_tolerance<T>());
 }
 
+bool test_relu() {
+    TestUtils::FP16TestFixture fixture("ReLU");
+    size_t input = fixture.create_input({5});
+    size_t result = fixture.graph().relu(input);
+    std::vector<__fp16> data = {-3.0f, -1.0f, 0.0f, 1.0f, 3.0f};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {0.0f, 0.0f, 0.0f, 1.0f, 3.0f};
+    return fixture.verify_output(result, expected);
+}
+
+bool test_sigmoid() {
+    TestUtils::FP16TestFixture fixture("Sigmoid");
+    size_t input = fixture.create_input({4});
+    size_t result = fixture.graph().sigmoid(input);
+    // sigmoid(x) = 1 / (1 + exp(-x))
+    std::vector<__fp16> data = {0.0f, 1.0f, -1.0f, 2.0f};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {0.5f, 0.7311f, 0.2689f, 0.8808f};
+    return fixture.verify_output(result, expected, 0.01f);
+}
+
+bool test_tanh_activation() {
+    TestUtils::FP16TestFixture fixture("Tanh");
+    size_t input = fixture.create_input({3});
+    size_t result = fixture.graph().tanh(input);
+    std::vector<__fp16> data = {0.0f, 1.0f, -1.0f};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {0.0f, 0.7616f, -0.7616f};
+    return fixture.verify_output(result, expected, 0.01f);
+}
+
+bool test_silu() {
+    TestUtils::FP16TestFixture fixture("SiLU");
+    size_t input = fixture.create_input({4});
+    size_t result = fixture.graph().silu(input);
+    // silu(x) = x * sigmoid(x)
+    std::vector<__fp16> data = {0.0f, 1.0f, -1.0f, 2.0f};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {0.0f, 0.7311f, -0.2689f, 1.7616f};
+    return fixture.verify_output(result, expected, 0.01f);
+}
+
+bool test_gelu() {
+    TestUtils::FP16TestFixture fixture("GELU");
+    size_t input = fixture.create_input({4});
+    size_t result = fixture.graph().gelu(input);
+    // gelu(x) approx: 0.5*x*(1+tanh(sqrt(2/pi)*(x+0.044715*x^3)))
+    std::vector<__fp16> data = {0.0f, 1.0f, -1.0f, 2.0f};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {0.0f, 0.841f, -0.159f, 1.955f};
+    return fixture.verify_output(result, expected, 0.02f);
+}
+
+bool test_slice() {
+    TestUtils::FP16TestFixture fixture("Slice");
+    size_t input = fixture.create_input({2, 3});
+    // slice axis=1, start=1, length=2: from each row take elements [1..2]
+    size_t result = fixture.graph().slice(input, 1, 1, 2);
+    std::vector<__fp16> data = {1, 2, 3, 4, 5, 6};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {2, 3, 5, 6};
+    return fixture.verify_output(result, expected);
+}
+
+bool test_index() {
+    TestUtils::FP16TestFixture fixture("Index");
+    size_t input = fixture.create_input({3, 4});
+    // index along dim=0 at position 1: selects second row
+    size_t result = fixture.graph().index(input, 1, 0);
+    std::vector<__fp16> data = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    fixture.set_input_data(input, data);
+    fixture.execute();
+    std::vector<__fp16> expected = {5, 6, 7, 8};
+    return fixture.verify_output(result, expected);
+}
+
 bool test_layernorm() {
     struct Case { size_t batch, feat; bool fp32, with_bias; float epsilon, weight_scale, bias_val; };
     const std::vector<Case> cases = {
@@ -1526,6 +1608,13 @@ int main() {
     runner.run_test("Embedding from File", test_embedding_from_file());
     runner.run_test("STFT Complex", test_stft());
     runner.run_test("LayerNorm", test_layernorm());
+    runner.run_test("ReLU", test_relu());
+    runner.run_test("Sigmoid", test_sigmoid());
+    runner.run_test("Tanh", test_tanh_activation());
+    runner.run_test("SiLU", test_silu());
+    runner.run_test("GELU", test_gelu());
+    runner.run_test("Slice", test_slice());
+    runner.run_test("Index", test_index());
     runner.print_summary();
     return runner.all_passed() ? 0 : 1;
 }
